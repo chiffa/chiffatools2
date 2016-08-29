@@ -369,8 +369,8 @@ def gini_coeff(x):
     otherwise results are undefined
     source : http://www.ellipsix.net/blog/2012/11/the-gini-coefficient-for-distribution-inequality.html
     """
+    x = np.ma.masked_invalid(x)
     x = np.abs(x)
-    x = rm_nans(x.astype(np.float))
     n = len(x)
     s = x.sum()
     r =  np.argsort(np.argsort(-x)) # calculates zero-based ranks
