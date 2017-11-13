@@ -150,3 +150,10 @@ def get_t_distro_outlier_bound_estimation(array, background_std):
     up, low = (up-np.mean(narray), np.mean(narray)-low)
 
     return max(up, low)
+
+def quantile_normalization(ref, target):
+    sorted_ref = np.sort(ref)
+    argsort_target = np.argsort(target)
+    normalized_target = sorted_ref[argsort_target]
+
+    return normalized_target
