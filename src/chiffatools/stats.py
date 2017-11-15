@@ -151,9 +151,51 @@ def get_t_distro_outlier_bound_estimation(array, background_std):
 
     return max(up, low)
 
+
 def quantile_normalization(ref, target):
     sorted_ref = np.sort(ref)
     argsort_target = np.argsort(target)
-    normalized_target = sorted_ref[argsort_target]
+    rev_argsort = np.argsort(argsort_target)
+    normalized_target = sorted_ref[rev_argsort]
 
     return normalized_target
+
+
+def zero_preserving_quantile_normalization(ref, target, zero=1):
+    zero = np.ones_like(ref)*zero
+    non_zero_in_both = np.logical_and(ref != zero, target != zero)
+
+    non_zero_ref = ref[non_zero_in_both]
+    non_zero_target = target[non_zero_in_both]
+
+    sorted_nz_ref = np.sort(non_zero_ref)
+    argsort_nz_target = np.argsort(non_zero_target)
+    rev_argsort = np.argsort(argsort_nz_target)
+    normalized_nz_target = sorted_nz_ref[rev_argsort]
+
+    normalized_target = np.zeros_like(target)
+    normalized_target[non_zero_in_both] = normalized_nz_target
+    normalized_target[np.logical_not(non_zero_in_both)] = target[np.logical_not(non_zero_in_both)]
+
+    # TODO: add correction of elements set to 0 to sampled from the reference-generated distribution
+
+    return normalized_target
+
+
+def conditional_cut_off(static_error, relative_error, multiplier=2):
+
+    def total_error_function(x):
+        x = np.power(10, x)
+
+        variance_with_bounds = np.sqrt(np.power(relative_error*x, 2)+np.power(static_error, 2))*multiplier*2
+
+        _min = (-variance_with_bounds+np.sqrt(variance_with_bounds**2+4*x**2))/2  # quadratic solve
+        _max = _min + variance_with_bounds
+
+        worst_fraction = np.log2(_max/_min)
+
+        return worst_fraction
+
+    total_error_function = np.vectorize(total_error_function)
+
+    return total_error_function
